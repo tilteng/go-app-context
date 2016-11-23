@@ -1,0 +1,37 @@
+{
+	"ImportPath": "github.com/tilteng/go-app-context",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v74",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/DataDog/datadog-go/statsd",
+			"Comment": "1.0.0-3-g09566b9",
+			"Rev": "09566b9502a4901761da924b4971011dc0376391"
+		},
+		{
+			"ImportPath": "github.com/comstud/go-rollbar/rollbar",
+			"Rev": "26cf59d034f13e9a25d76ab70fd2786abdf45fef"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Comment": "go1.0-cutoff-117-g50761b0",
+			"Rev": "50761b0867bd1d9d069276790bcd4a3bccf2324a"
+		},
+		{
+			"ImportPath": "github.com/lib/pq/oid",
+			"Comment": "go1.0-cutoff-117-g50761b0",
+			"Rev": "50761b0867bd1d9d069276790bcd4a3bccf2324a"
+		},
+		{
+			"ImportPath": "github.com/tilteng/go-logger/logger",
+			"Rev": "391adafe62c2ae92986f371d25ef3c478075fa03"
+		},
+		{
+			"ImportPath": "github.com/tilteng/go-metrics/metrics",
+			"Rev": "167ce577bce2893b6056ef879454978f241551b4"
+		}
+	]
+}
