@@ -31,7 +31,7 @@
 		},
 		{
 			"ImportPath": "github.com/tilteng/go-metrics/metrics",
-			"Rev": "167ce577bce2893b6056ef879454978f241551b4"
+			"Rev": "16b1a88aa53236ec2de47aaaf4a3e1d4876e801a"
 		}
 	]
 }
