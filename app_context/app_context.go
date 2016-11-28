@@ -16,7 +16,6 @@ import (
 type ctxlogger logger.Logger
 
 type AppContext interface {
-	ctxlogger
 	AppName() string
 	Hostname() string
 	Logger() logger.Logger
@@ -25,10 +24,11 @@ type AppContext interface {
 	MetricsClient() metrics.MetricsClient
 	MetricsEnabled() bool
 	DB() *sql.DB
+	SetLogger(logger.Logger) AppContext
 }
 
 type baseAppContext struct {
-	ctxlogger
+	logger         logger.Logger
 	appName        string
 	hostname       string
 	rollbarClient  rollbar.Client
@@ -43,7 +43,7 @@ func (self *baseAppContext) DB() *sql.DB {
 }
 
 func (self *baseAppContext) Logger() logger.Logger {
-	return self.ctxlogger
+	return self.logger
 }
 
 func (self *baseAppContext) RollbarClient() rollbar.Client {
@@ -68,6 +68,11 @@ func (self *baseAppContext) RollbarEnabled() bool {
 
 func (self *baseAppContext) MetricsEnabled() bool {
 	return self.metricsEnabled
+}
+
+func (self *baseAppContext) SetLogger(logger logger.Logger) AppContext {
+	self.logger = logger
+	return self
 }
 
 func (self *baseAppContext) isDisabled(s string) (bool, error) {
@@ -177,10 +182,7 @@ func (self *baseAppContext) setDBFromEnv() error {
 
 func NewAppContext(app_name string) (AppContext, error) {
 	appctx := &baseAppContext{
-		ctxlogger: logger.NewDefaultLogger(
-			os.Stdout,
-			"",
-		),
+		logger:         logger.DefaultStdoutLogger(),
 		appName:        app_name,
 		rollbarEnabled: false,
 		rollbarClient:  rollbar.NewNOOPClient(),
