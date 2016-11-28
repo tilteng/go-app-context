@@ -13,22 +13,20 @@ import (
 	"github.com/tilteng/go-metrics/metrics"
 )
 
-type ctxlogger logger.Logger
-
 type AppContext interface {
 	AppName() string
 	Hostname() string
-	Logger() logger.Logger
+	Logger() logger.CtxLogger
 	RollbarClient() rollbar.Client
 	RollbarEnabled() bool
 	MetricsClient() metrics.MetricsClient
 	MetricsEnabled() bool
 	DB() *sql.DB
-	SetLogger(logger.Logger) AppContext
+	SetLogger(logger.CtxLogger) AppContext
 }
 
 type baseAppContext struct {
-	logger         logger.Logger
+	logger         logger.CtxLogger
 	appName        string
 	hostname       string
 	rollbarClient  rollbar.Client
@@ -42,7 +40,7 @@ func (self *baseAppContext) DB() *sql.DB {
 	return self.db
 }
 
-func (self *baseAppContext) Logger() logger.Logger {
+func (self *baseAppContext) Logger() logger.CtxLogger {
 	return self.logger
 }
 
@@ -70,7 +68,7 @@ func (self *baseAppContext) MetricsEnabled() bool {
 	return self.metricsEnabled
 }
 
-func (self *baseAppContext) SetLogger(logger logger.Logger) AppContext {
+func (self *baseAppContext) SetLogger(logger logger.CtxLogger) AppContext {
 	self.logger = logger
 	return self
 }
@@ -182,7 +180,7 @@ func (self *baseAppContext) setDBFromEnv() error {
 
 func NewAppContext(app_name string) (AppContext, error) {
 	appctx := &baseAppContext{
-		logger:         logger.DefaultStdoutLogger(),
+		logger:         logger.DefaultStdoutCtxLogger(),
 		appName:        app_name,
 		rollbarEnabled: false,
 		rollbarClient:  rollbar.NewNOOPClient(),
