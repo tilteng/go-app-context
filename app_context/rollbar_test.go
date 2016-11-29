@@ -53,3 +53,18 @@ func TestRollbarEnabled(t *testing.T) {
 		t.Error("No ROLLBAR_API_KEY but rollbar is enabled")
 	}
 }
+
+func TestRollbarCodeVersion(t *testing.T) {
+	os.Setenv("ROLLBAR_API_KEY", "FOO")
+	os.Setenv("CODE_VERSION", "abc987")
+
+	app_ctx, err := NewAppContext("rollbar_test")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	vers := app_ctx.RollbarClient().Options().NotifierServer.CodeVersion
+	if vers != "abc987" {
+		t.Errorf("Rollbar code version != 'abc987': %s", vers)
+	}
+}
