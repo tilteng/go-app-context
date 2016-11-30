@@ -21,7 +21,7 @@ type AppContext interface {
 	CodeVersion() string
 	DB() *sql.DB
 	Hostname() string
-	JSONSchemaPath() string
+	JSONSchemaFilePath() string
 	Logger() logger.CtxLogger
 	MetricsClient() metrics.MetricsClient
 	MetricsEnabled() bool
@@ -31,18 +31,18 @@ type AppContext interface {
 }
 
 type baseAppContext struct {
-	apiPort         int
-	appName         string
-	baseExternalURL string
-	codeVersion     string
-	db              *sql.DB
-	hostname        string
-	jsonSchemaPath  string
-	logger          logger.CtxLogger
-	metricsClient   metrics.MetricsClient
-	metricsEnabled  bool
-	rollbarClient   rollbar.Client
-	rollbarEnabled  bool
+	apiPort            int
+	appName            string
+	baseExternalURL    string
+	codeVersion        string
+	db                 *sql.DB
+	hostname           string
+	jsonSchemaFilePath string
+	logger             logger.CtxLogger
+	metricsClient      metrics.MetricsClient
+	metricsEnabled     bool
+	rollbarClient      rollbar.Client
+	rollbarEnabled     bool
 }
 
 func (self *baseAppContext) APIPort() int {
@@ -69,8 +69,8 @@ func (self *baseAppContext) Hostname() string {
 	return self.hostname
 }
 
-func (self *baseAppContext) JSONSchemaPath() string {
-	return self.jsonSchemaPath
+func (self *baseAppContext) JSONSchemaFilePath() string {
+	return self.jsonSchemaFilePath
 }
 
 func (self *baseAppContext) Logger() logger.CtxLogger {
@@ -255,7 +255,7 @@ func NewAppContext(app_name string) (AppContext, error) {
 		appctx.apiPort = port
 	}
 
-	appctx.jsonSchemaPath = os.Getenv("JSON_SCHEMA_PATH")
+	appctx.jsonSchemaFilePath = os.Getenv("JSON_SCHEMA_FILEPATH")
 	appctx.baseExternalURL = os.Getenv("BASE_URL")
 
 	if err := appctx.setMetricsClientFromEnv(); err != nil {
