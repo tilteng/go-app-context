@@ -27,11 +27,11 @@
 		},
 		{
 			"ImportPath": "github.com/tilteng/go-logger/logger",
-			"Rev": "72cf7202baa7a53b73bb5d287e00e88c2cb3cc18"
+			"Rev": "8348e6844b648783fd0a5c79545f605c826e231f"
 		},
 		{
 			"ImportPath": "github.com/tilteng/go-metrics/metrics",
-			"Rev": "16b1a88aa53236ec2de47aaaf4a3e1d4876e801a"
+			"Rev": "9d37d413d34b682a2d7a7f44446c67ab193008ef"
 		}
 	]
 }
