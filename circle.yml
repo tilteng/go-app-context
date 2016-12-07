@@ -19,7 +19,7 @@ dependencies:
 
 test:
   pre:
-    - go vet ./...
+    - go vet ./app_context
 
   override:
     - cd "$SRC_GOPATH" && go test -v -race ./...
