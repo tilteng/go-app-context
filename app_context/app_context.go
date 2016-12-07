@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/comstud/go-rollbar/rollbar"
 	_ "github.com/lib/pq"
@@ -28,6 +30,8 @@ type AppContext interface {
 	RollbarEnabled() bool
 	ServicePort() int
 	SetLogger(logger.CtxLogger) AppContext
+	StartStatsSender() error
+	StopStatsSender() error
 }
 
 type baseAppContext struct {
@@ -45,6 +49,10 @@ type baseAppContext struct {
 	rollbarClient      rollbar.Client
 	rollbarEnabled     bool
 	servicePort        int
+	statsLock          sync.Mutex
+	statsSignalChan    chan bool
+	statsDoneChan      chan bool
+	statsRunning       bool
 }
 
 func (self *baseAppContext) AppName() string {
@@ -275,14 +283,59 @@ func (self *baseAppContext) setServicePortFromEnv() error {
 	}
 }
 
+func (self *baseAppContext) StartStatsSender() error {
+	self.statsLock.Lock()
+	defer self.statsLock.Unlock()
+	if self.statsRunning {
+		return errors.New("Stats sender is already running")
+	}
+
+	go func() {
+		previous := metrics.GetProcStats()
+		for {
+			select {
+			case <-self.statsSignalChan:
+				self.statsDoneChan <- true
+				return
+			case <-time.After(time.Second * 1):
+				current := metrics.GetProcStats()
+				self.SendStats(previous, current)
+				previous = current
+			}
+
+		}
+	}()
+
+	self.statsRunning = true
+
+	return nil
+}
+
+func (self *baseAppContext) StopStatsSender() error {
+	self.statsLock.Lock()
+	defer self.statsLock.Unlock()
+
+	if !self.statsRunning {
+		return errors.New("Stats sender isn't running")
+	}
+
+	self.statsSignalChan <- true
+	<-self.statsDoneChan
+	self.statsRunning = false
+
+	return nil
+}
+
 func NewAppContext(app_name string) (AppContext, error) {
 	appctx := &baseAppContext{
-		logger:         logger.DefaultStdoutCtxLogger(),
-		appName:        app_name,
-		rollbarEnabled: false,
-		rollbarClient:  rollbar.NewNOOPClient(),
-		metricsEnabled: false,
-		metricsClient:  metrics.NewNOOPClient(),
+		logger:          logger.DefaultStdoutCtxLogger(),
+		appName:         app_name,
+		rollbarEnabled:  false,
+		rollbarClient:   rollbar.NewNOOPClient(),
+		metricsEnabled:  false,
+		metricsClient:   metrics.NewNOOPClient(),
+		statsDoneChan:   make(chan bool),
+		statsSignalChan: make(chan bool),
 	}
 
 	if host, err := os.Hostname(); err != nil {
