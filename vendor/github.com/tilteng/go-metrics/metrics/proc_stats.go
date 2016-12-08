@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/net"
 	"github.com/shirou/gopsutil/process"
 )
 
@@ -15,6 +16,8 @@ type ProcStats struct {
 	NumGoRoutines int
 	MemStats      runtime.MemStats
 	CPUTimes      cpu.TimesStat
+	NumFDs        int32
+	IOCounters    []net.IOCountersStat
 }
 
 func GetProcStats() *ProcStats {
@@ -29,6 +32,14 @@ func GetProcStats() *ProcStats {
 	if p, err := process.NewProcess(int32(os.Getpid())); err == nil {
 		if t, err := p.Times(); err == nil {
 			sample.CPUTimes = *t
+		}
+
+		if fds, err := p.NumFDs(); err == nil {
+			sample.NumFDs = fds
+		}
+
+		if netinfo, err := p.NetIOCounters(false); err == nil {
+			sample.IOCounters = netinfo
 		}
 	}
 

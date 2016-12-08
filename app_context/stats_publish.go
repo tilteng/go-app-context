@@ -1,6 +1,11 @@
 package app_context
 
-import "github.com/tilteng/go-metrics/metrics"
+import (
+	"time"
+
+	"github.com/shirou/gopsutil/net"
+	"github.com/tilteng/go-metrics/metrics"
+)
 
 func (self *baseAppContext) SendStats(previous *metrics.ProcStats, current *metrics.ProcStats) {
 	if !self.metricsEnabled || previous == nil || current == nil {
@@ -101,8 +106,8 @@ func (self *baseAppContext) SendStats(previous *metrics.ProcStats, current *metr
 	)
 
 	self.metricsClient.Histogram(
-		"proc_stats.mem.gc.pause_ns",
-		float64(current.MemStats.PauseTotalNs-previous.MemStats.PauseTotalNs),
+		"proc_stats.mem.gc.pause_ms",
+		float64((current.MemStats.PauseTotalNs-previous.MemStats.PauseTotalNs))/float64(time.Millisecond),
 		delta,
 		nil,
 	)
@@ -113,4 +118,88 @@ func (self *baseAppContext) SendStats(previous *metrics.ProcStats, current *metr
 		delta,
 		nil,
 	)
+
+	self.metricsClient.Gauge(
+		"proc_stats.files.num_open",
+		float64(current.NumFDs),
+		delta,
+		nil,
+	)
+
+	for i, counters := range current.IOCounters {
+		var prev_counters *net.IOCountersStat
+
+		if (i < len(previous.IOCounters)) &&
+			(previous.IOCounters[i].Name == counters.Name) {
+			prev_counters = &previous.IOCounters[i]
+		} else {
+			for _, prev := range previous.IOCounters {
+				if prev.Name == counters.Name {
+					prev_counters = &prev
+					break
+				}
+			}
+		}
+
+		if prev_counters == nil {
+			continue
+		}
+
+		prefix := "proc_stats.net." + counters.Name
+
+		self.metricsClient.Histogram(
+			prefix+".bytes_sent",
+			float64(counters.BytesSent-prev_counters.BytesSent),
+			delta,
+			nil,
+		)
+
+		self.metricsClient.Histogram(
+			prefix+".bytes_recv",
+			float64(counters.BytesRecv-prev_counters.BytesRecv),
+			delta,
+			nil,
+		)
+
+		self.metricsClient.Histogram(
+			prefix+".packets_sent",
+			float64(counters.PacketsSent-prev_counters.PacketsSent),
+			delta,
+			nil,
+		)
+
+		self.metricsClient.Histogram(
+			prefix+".packets_recv",
+			float64(counters.PacketsRecv-prev_counters.PacketsRecv),
+			delta,
+			nil,
+		)
+
+		self.metricsClient.Count(
+			prefix+".num_errors_out",
+			int64(counters.Errout-prev_counters.Errout),
+			delta,
+			nil,
+		)
+		self.metricsClient.Count(
+			prefix+".num_errors_in",
+			int64(counters.Errin-prev_counters.Errin),
+			delta,
+			nil,
+		)
+
+		self.metricsClient.Count(
+			prefix+".num_dropped_out",
+			int64(counters.Dropout-prev_counters.Dropout),
+			delta,
+			nil,
+		)
+		self.metricsClient.Count(
+			prefix+".num_dropped_in",
+			int64(counters.Dropin-prev_counters.Dropin),
+			delta,
+			nil,
+		)
+	}
+
 }
