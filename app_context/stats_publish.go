@@ -7,124 +7,8 @@ import (
 	"github.com/tilteng/go-metrics/metrics"
 )
 
-func (self *baseAppContext) SendStats(previous *metrics.ProcStats, current *metrics.ProcStats) {
-	if !self.metricsEnabled || previous == nil || current == nil {
-		return
-	}
-
+func (self *baseAppContext) sendNetworkStats(previous *metrics.ProcStats, current *metrics.ProcStats) {
 	delta := current.Timestamp.Sub(previous.Timestamp).Seconds()
-
-	self.metricsClient.Gauge(
-		"proc_stats.num_cpus",
-		float64(current.NumCPUs),
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Histogram(
-		"proc_stats.num_goroutines",
-		float64(current.NumGoRoutines),
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Histogram(
-		"proc_stats.cpu.user_time",
-		current.CPUTimes.User-previous.CPUTimes.User,
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Histogram(
-		"proc_stats.cpu.sys_time",
-		current.CPUTimes.System-previous.CPUTimes.System,
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Histogram(
-		"proc_stats.cpu.idle_time",
-		current.CPUTimes.Idle-previous.CPUTimes.Idle,
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Histogram(
-		"proc_stats.cpu.iowait_time",
-		current.CPUTimes.Iowait-previous.CPUTimes.Iowait,
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Histogram(
-		"proc_stats.mem.alloc.non_freed_bytes",
-		float64(current.MemStats.Alloc),
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Histogram(
-		"proc_stats.mem.alloc.total_bytes",
-		float64(current.MemStats.Alloc),
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Count(
-		"proc_stats.mem.alloc.count",
-		int64(current.MemStats.Mallocs-previous.MemStats.Mallocs),
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Histogram(
-		"proc_stats.mem.heap.bytes_alloc",
-		float64(current.MemStats.HeapAlloc),
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Histogram(
-		"proc_stats.mem.heap.bytes_in_use",
-		float64(current.MemStats.HeapInuse),
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Histogram(
-		"proc_stats.mem.heap.bytes_released",
-		float64(current.MemStats.HeapReleased),
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Histogram(
-		"proc_stats.mem.heap.num_objects",
-		float64(current.MemStats.HeapObjects),
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Histogram(
-		"proc_stats.mem.gc.pause_ms",
-		float64((current.MemStats.PauseTotalNs-previous.MemStats.PauseTotalNs))/float64(time.Millisecond),
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Count(
-		"proc_stats.mem.gc.count",
-		int64(current.MemStats.NumGC)-int64(previous.MemStats.NumGC),
-		delta,
-		nil,
-	)
-
-	self.metricsClient.Gauge(
-		"proc_stats.files.num_open",
-		float64(current.NumFDs),
-		delta,
-		nil,
-	)
 
 	for i, counters := range current.IOCounters {
 		var prev_counters *net.IOCountersStat
@@ -201,5 +85,122 @@ func (self *baseAppContext) SendStats(previous *metrics.ProcStats, current *metr
 			nil,
 		)
 	}
+}
 
+func (self *baseAppContext) sendMemStats(previous *metrics.ProcStats, current *metrics.ProcStats) {
+	delta := current.Timestamp.Sub(previous.Timestamp).Seconds()
+
+	self.metricsClient.Histogram(
+		"proc_stats.mem.alloc.non_freed_bytes",
+		float64(current.MemStats.Alloc),
+		delta,
+		nil,
+	)
+
+	self.metricsClient.Histogram(
+		"proc_stats.mem.alloc.total_bytes",
+		float64(current.MemStats.Alloc),
+		delta,
+		nil,
+	)
+
+	self.metricsClient.Count(
+		"proc_stats.mem.alloc.count",
+		int64(current.MemStats.Mallocs-previous.MemStats.Mallocs),
+		delta,
+		nil,
+	)
+
+	self.metricsClient.Histogram(
+		"proc_stats.mem.heap.bytes_alloc",
+		float64(current.MemStats.HeapAlloc),
+		delta,
+		nil,
+	)
+
+	self.metricsClient.Histogram(
+		"proc_stats.mem.heap.bytes_in_use",
+		float64(current.MemStats.HeapInuse),
+		delta,
+		nil,
+	)
+
+	self.metricsClient.Histogram(
+		"proc_stats.mem.heap.bytes_released",
+		float64(current.MemStats.HeapReleased),
+		delta,
+		nil,
+	)
+
+	self.metricsClient.Histogram(
+		"proc_stats.mem.heap.num_objects",
+		float64(current.MemStats.HeapObjects),
+		delta,
+		nil,
+	)
+
+	self.metricsClient.Histogram(
+		"proc_stats.mem.gc.pause_ms",
+		float64((current.MemStats.PauseTotalNs-previous.MemStats.PauseTotalNs))/float64(time.Millisecond),
+		delta,
+		nil,
+	)
+
+	self.metricsClient.Count(
+		"proc_stats.mem.gc.count",
+		int64(current.MemStats.NumGC)-int64(previous.MemStats.NumGC),
+		delta,
+		nil,
+	)
+}
+
+func (self *baseAppContext) sendCPUStats(previous *metrics.ProcStats, current *metrics.ProcStats) {
+	delta := current.Timestamp.Sub(previous.Timestamp).Seconds()
+
+	self.metricsClient.Gauge(
+		"proc_stats.num_cpus",
+		float64(current.NumCPUs),
+		delta,
+		nil,
+	)
+
+	self.metricsClient.Histogram(
+		"proc_stats.cpu.user_percent",
+		100.0*(current.CPUTimes.User-previous.CPUTimes.User),
+		delta,
+		nil,
+	)
+
+	self.metricsClient.Histogram(
+		"proc_stats.cpu.sys_percent",
+		100.0*(current.CPUTimes.System-previous.CPUTimes.System),
+		delta,
+		nil,
+	)
+}
+
+func (self *baseAppContext) SendStats(previous *metrics.ProcStats, current *metrics.ProcStats) {
+	if !self.metricsEnabled || previous == nil || current == nil {
+		return
+	}
+
+	self.sendCPUStats(previous, current)
+	self.sendMemStats(previous, current)
+	self.sendNetworkStats(previous, current)
+
+	delta := current.Timestamp.Sub(previous.Timestamp).Seconds()
+
+	self.metricsClient.Histogram(
+		"proc_stats.num_goroutines",
+		float64(current.NumGoRoutines),
+		delta,
+		nil,
+	)
+
+	self.metricsClient.Gauge(
+		"proc_stats.files.num_open",
+		float64(current.NumFDs),
+		delta,
+		nil,
+	)
 }
