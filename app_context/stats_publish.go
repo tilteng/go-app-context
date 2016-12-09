@@ -190,6 +190,16 @@ func (self *baseAppContext) SendStats(previous *metrics.ProcStats, current *metr
 
 	delta := current.Timestamp.Sub(previous.Timestamp).Seconds()
 
+	if db := self.DB(); db != nil {
+		db_stats := db.Stats()
+		self.metricsClient.Gauge(
+			"proc_stats.db.num_connections",
+			float64(db_stats.OpenConnections),
+			delta,
+			nil,
+		)
+	}
+
 	self.metricsClient.Histogram(
 		"proc_stats.num_goroutines",
 		float64(current.NumGoRoutines),
