@@ -1,7 +1,6 @@
 package app_context
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/comstud/go-rollbar/rollbar"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/tilteng/go-logger/logger"
 	"github.com/tilteng/go-metrics/metrics"
@@ -20,7 +20,7 @@ type AppContext interface {
 	AppName() string
 	BaseExternalURL() string
 	CodeVersion() string
-	DB() *sql.DB
+	DB() *sqlx.DB
 	Hostname() string
 	JSONSchemaFilePath() string
 	Logger() logger.CtxLogger
@@ -38,7 +38,7 @@ type baseAppContext struct {
 	appName            string
 	baseExternalURL    string
 	codeVersion        string
-	db                 *sql.DB
+	db                 *sqlx.DB
 	dbMaxIdleConns     int
 	dbMaxOpenConns     int
 	hostname           string
@@ -67,7 +67,7 @@ func (self *baseAppContext) CodeVersion() string {
 	return self.codeVersion
 }
 
-func (self *baseAppContext) DB() *sql.DB {
+func (self *baseAppContext) DB() *sqlx.DB {
 	return self.db
 }
 
@@ -222,7 +222,7 @@ func (self *baseAppContext) setDBFromEnv() error {
 		return nil
 	}
 
-	db, err := sql.Open("postgres", db_string)
+	db, err := sqlx.Open("postgres", db_string)
 	if err != nil {
 		return errors.New("Couldn't open the database. Check that DB_DSN is correct.")
 	}
