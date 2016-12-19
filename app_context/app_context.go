@@ -3,6 +3,7 @@ package app_context
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/tilteng/go-logger/logger"
 	"github.com/tilteng/go-metrics/metrics"
+	"github.com/tilteng/go-s3-config/s3config"
 )
 
 type AppContext interface {
@@ -336,6 +338,19 @@ func NewAppContext(app_name string) (AppContext, error) {
 		metricsClient:   metrics.NewNOOPClient(),
 		statsDoneChan:   make(chan bool),
 		statsSignalChan: make(chan bool),
+	}
+
+	s3loc := os.Getenv("APPCTX_S3_CONFIG")
+	if s3loc != "" {
+		locparts := strings.Split(s3loc, "::")
+		if len(locparts) != 3 {
+			log.Fatal("APPCTX_S3_CONFIG should be: region::bucket::key")
+		}
+
+		err := s3config.SetEnvironment(locparts[0], locparts[1], locparts[2], false)
+		if err != nil {
+			log.Fatalf("Error setting up environment from s3: %s", err)
+		}
 	}
 
 	if host, err := os.Hostname(); err != nil {
