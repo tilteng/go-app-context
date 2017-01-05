@@ -34,6 +34,7 @@ type AppContext interface {
 	SetLogger(logger.CtxLogger) AppContext
 	StartStatsSender() error
 	StopStatsSender() error
+	TiltEnv() string
 }
 
 type baseAppContext struct {
@@ -55,6 +56,7 @@ type baseAppContext struct {
 	statsSignalChan    chan bool
 	statsDoneChan      chan bool
 	statsRunning       bool
+	tiltEnv            string
 }
 
 func (self *baseAppContext) AppName() string {
@@ -111,6 +113,10 @@ func (self *baseAppContext) RollbarEnabled() bool {
 
 func (self *baseAppContext) ServicePort() int {
 	return self.servicePort
+}
+
+func (self *baseAppContext) TiltEnv() string {
+	return self.tiltEnv
 }
 
 func (self *baseAppContext) SetLogger(logger logger.CtxLogger) AppContext {
@@ -338,6 +344,18 @@ func NewAppContext(app_name string) (AppContext, error) {
 		metricsClient:   metrics.NewNOOPClient(),
 		statsDoneChan:   make(chan bool),
 		statsSignalChan: make(chan bool),
+	}
+
+	appctx.tiltEnv = os.Getenv("TILT_ENVIRONMENT")
+	if appctx.tiltEnv == "" {
+		appctx.tiltEnv = "development"
+	}
+
+	if appctx.tiltEnv != "development" &&
+		appctx.tiltEnv != "testing" &&
+		appctx.tiltEnv != "staging" &&
+		appctx.tiltEnv != "production" {
+		return nil, fmt.Errorf("Unknown TILT_ENVIRONMENT: %s", appctx.tiltEnv)
 	}
 
 	s3loc := os.Getenv("APPCTX_S3_CONFIG")
