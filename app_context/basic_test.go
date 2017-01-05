@@ -32,6 +32,8 @@ func TestTiltEnv(t *testing.T) {
 	if err == nil {
 		t.Error("app context should have failed")
 	}
+
+	os.Unsetenv("TILT_ENVIRONMENT")
 }
 
 func TestCodeVersion(t *testing.T) {
