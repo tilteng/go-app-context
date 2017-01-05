@@ -34,6 +34,7 @@ type AppContext interface {
 	SetLogger(logger.CtxLogger) AppContext
 	StartStatsSender() error
 	StopStatsSender() error
+	TiltEnv() string
 }
 
 type baseAppContext struct {
